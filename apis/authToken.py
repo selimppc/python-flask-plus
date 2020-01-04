@@ -1,4 +1,4 @@
-from flask_restplus import Resource, Namespace, fields
+from flask_restplus import Resource, Namespace, fields, reqparse
 from flask import Flask, jsonify, request
 import datetime
 import jwt
@@ -36,6 +36,12 @@ def encode_auth_token():
         return e
 
 
+parser = reqparse.RequestParser()
+parser.add_argument('grant_type', type=str, required=True, help='Type cannot be blank')
+parser.add_argument('client_id', type=str, required=True, help="Client_ID cannot be blank!")
+parser.add_argument('client_secret', type=str, required=True, help="Client_SECRET cannot be blank!")
+
+
 @api.route('/')
 class TokenProvider(Resource):
     @api.doc(responses={200: 'OK', 400: 'Invalid Request', 500: 'Mapping Key Error'})
@@ -43,7 +49,19 @@ class TokenProvider(Resource):
     def get(self):
         """response token"""
         try:
-            return TOKEN
+            return jsonify(TOKEN)
         except Exception as e:
             api.abort(400, e.__doc__, status='Could not retrieve information', statusCode='400')
 
+    @api.expect(parser, validate=True)
+    def post(self):
+        args = parser.parse_args()
+        gran_type = args['grant_type']
+        client_id = args['client_id']
+        client_secret = args['client_secret']
+        data = {
+            'access_token': TOKEN,
+            'token_type': 'Bearer',
+            'expires_in': str(datetime.timedelta(days=1))
+        }
+        return jsonify(data)
