@@ -7,7 +7,7 @@ import datetime
 import jwt
 from logging.config import dictConfig
 
-from config import key
+from app.config import key
 
 api = Namespace('auth', description='Auth Token')
 
