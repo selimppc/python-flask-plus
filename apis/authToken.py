@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request
 import datetime
 import jwt
 
-# from ..config import key
+from config import key
 
 api = Namespace('auth', description='Auth Token')
 
@@ -27,11 +27,12 @@ def encode_auth_token():
             'iat': datetime.datetime.utcnow(),
             'sub': 2222
         }
-        return jwt.encode(
+        token = jwt.encode(
             payload,
-            # key,
+            'this-is-enc',
             algorithm='HS256'
         )
+        return token.decode()
     except Exception as e:
         return e
 
@@ -41,6 +42,11 @@ parser.add_argument('grant_type', type=str, required=True, help='Type cannot be 
 parser.add_argument('client_id', type=str, required=True, help="Client_ID cannot be blank!")
 parser.add_argument('client_secret', type=str, required=True, help="Client_SECRET cannot be blank!")
 
+_tokenModel = api.model('TokenModel', {
+    'grant_type': fields.String(required=True, description='This Grant Type is Required'),
+    'client_id': fields.String(required=True, description='This ClientID is Required'),
+    'client_secret': fields.String(required=True, description='This ClientSecret is Required')
+})
 
 @api.route('/')
 class TokenProvider(Resource):
@@ -49,18 +55,19 @@ class TokenProvider(Resource):
     def get(self):
         """response token"""
         try:
-            return jsonify(TOKEN)
+            return {
+                'token': encode_auth_token()
+            }
         except Exception as e:
             api.abort(400, e.__doc__, status='Could not retrieve information', statusCode='400')
 
-    @api.expect(parser, validate=True)
+    @api.expect(_tokenModel, validate=True)
     def post(self):
         args = parser.parse_args()
-        gran_type = args['grant_type']
-        client_id = args['client_id']
-        client_secret = args['client_secret']
+        requestData = request.json
+
         data = {
-            'access_token': TOKEN,
+            'access_token': encode_auth_token(),
             'token_type': 'Bearer',
             'expires_in': str(datetime.timedelta(days=1))
         }
