@@ -73,6 +73,8 @@ class TokenProvider(Resource):
 class CallToAuthMs(Resource):
     @api.doc(responses={200: 'OK', 400: 'Invalid Request', 500: 'Mapping Key Error'})
     @api.expect(_tokenModel, validate=True)
+
+    #@jwt_token_validate
     def post(self):
         # headers = {'Authorization': 'Bearer Token'}
         body = {

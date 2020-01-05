@@ -1,9 +1,11 @@
+from flask import Blueprint
 from flask_restplus import Api
 
 from .authToken import api as ns1
 from .getPackageList import api as ns2
 from .activePackageCall import api as ns3
 
+#blueprint_api = Blueprint('api', __name__, url_prefix="/api")
 api = Api(
     title='Digital Agency APP',
     version='1.0',
