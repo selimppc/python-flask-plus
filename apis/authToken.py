@@ -1,7 +1,11 @@
+import json
+
+import requests
 from flask_restplus import Resource, Namespace, fields, reqparse
 from flask import Flask, jsonify, request
 import datetime
 import jwt
+from logging.config import dictConfig
 
 from config import key
 
@@ -37,16 +41,12 @@ def encode_auth_token():
         return e
 
 
-parser = reqparse.RequestParser()
-parser.add_argument('grant_type', type=str, required=True, help='Type cannot be blank')
-parser.add_argument('client_id', type=str, required=True, help="Client_ID cannot be blank!")
-parser.add_argument('client_secret', type=str, required=True, help="Client_SECRET cannot be blank!")
-
 _tokenModel = api.model('TokenModel', {
     'grant_type': fields.String(required=True, description='This Grant Type is Required'),
     'client_id': fields.String(required=True, description='This ClientID is Required'),
     'client_secret': fields.String(required=True, description='This ClientSecret is Required')
 })
+
 
 @api.route('/')
 class TokenProvider(Resource):
@@ -63,7 +63,6 @@ class TokenProvider(Resource):
 
     @api.expect(_tokenModel, validate=True)
     def post(self):
-        args = parser.parse_args()
         requestData = request.json
 
         data = {
@@ -72,3 +71,31 @@ class TokenProvider(Resource):
             'expires_in': str(datetime.timedelta(days=1))
         }
         return jsonify(data)
+
+
+@api.route('/call_to_auth_ms')
+class CallToAuthMs(Resource):
+    @api.doc(responses={200: 'OK', 400: 'Invalid Request', 500: 'Mapping Key Error'})
+    @api.expect(_tokenModel, validate=True)
+    def post(self):
+        #headers = {'Authorization': 'Bearer Token'}
+        body = {
+            "authentication_type": "phone",
+            "phone_no": "8801678114307",
+            "phone_no_country_code": "BD",
+            "client_type": "web",
+            "client_id": "123456789",
+            "channel": "bioscope_web_phone_desktop"
+
+        }
+
+        try:
+            r = requests.post('http://stageapi.bongobd.com/app_dev.php/api/login_check',
+                              data=body
+                              )
+            response = json.loads(r.content.decode('utf-8'))
+            return {
+                'response': response['token']
+            }
+        except Exception as e:
+            api.abort(400, e.__doc__, status='Could not retrieve information', statusCode='400')
