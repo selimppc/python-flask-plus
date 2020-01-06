@@ -12,6 +12,11 @@ $ virtualenv venv
 $ source venv/bin/activate
 ``
 
+### Install Packages 
+``
+$ pip install -r requirements.txt
+``
+
 ### Running app
 ``
 $ flask run
